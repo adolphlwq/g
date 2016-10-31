@@ -1,0 +1,22 @@
+#!/bin/bash
+
+#
+# Setup
+#
+
+VERSION="0.0.1"
+UP=$'\033[A'
+DOWN=$'\033[B'
+QG_PREFIX=${QG_PREFIX-/usr/local}
+BASE_VERSION_DIR=$QG_PREFIX/qgo/versions
+
+
+#
+# State
+#
+DEFAULT=0
+QUIET=true
+ACTIVATE=true
+ARCH=
+
+
