@@ -19,4 +19,45 @@ QUIET=true
 ACTIVATE=true
 ARCH=
 
+#
+# Hide cursor.
+#
 
+hide_cursor() {
+    printf "\e[?25l"
+}
+
+#
+# Show cursor.
+#
+
+show_cursor() {
+    printf "\e[?25h"
+}
+
+usage(){
+    cat <<-EOF
+
+    Usage: g [options] [COMMAND] [args]
+
+    Commands:
+
+      g                   Output help information
+      g ls                Output all Golang versions
+      g <version>         Install or activate Golang <version>
+      g rm <version>      Remove the given version(s)
+      g latest            Install or activate latest Golang release
+
+    Options:
+      
+      -V, --version        Output current version of g
+      -h, --help           Display help information
+      -d, --download       Download only
+EOF
+}
+
+main(){
+    usage
+}
+
+main
