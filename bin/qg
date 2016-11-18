@@ -26,15 +26,14 @@ usage(){
 
       g                   Output help information
       g ls                Output all Golang versions
-      g <version>         Install or activate Golang <version>
-      g rm <version>      Remove the given version(s)
-      g latest            Install or activate latest Golang release
+      g use               Use specific version
+      g dl                Download Golang package
+      g rm                Remove the given version
+      g build             Build binary using specific version
 
     Options:
-      
-      -V, --version        Output current version of g
+
       -h, --help           Display help information
-      -d, --download       Download only
 EOF
 }
 
@@ -143,10 +142,12 @@ if test $# -eq 0;then
 else
   while test $# -ne 0;do
     case $1 in
-      -ls|--list) display_remote_versions;;
+      ls) display_remote_versions;;
       -h|--help) usage;;
-      -dl|--download) download_specific_version $2; exit;;
-      -use) use; exit;;
+      dl) download_specific_version $2; exit;;
+      use) use; exit;;
+      rm) echo 'not impleted'; exit;;
+      build) echo 'not impleted'; exit;;
       *) usage; exit;;
      esac
      shift
