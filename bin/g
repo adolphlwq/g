@@ -4,22 +4,17 @@
 # Setup
 #
 
-VERSION="0.0.1"
-G_PREFIX=/usr/local
-BASE_VERSION_DIR=$G_PREFIX/golang/versions
-BASE_ACTIVE_DIR=$G_PREFIX/bin
-BASE_URL='https://storage.googleapis.com/golang'
-ENV_FILE=~/.bashrc
-#
-# State
-#
-DEFAULT=0
-QUIET=true
-ACTIVATE=true
+g_version="0.0.1"
+g_prefix=/usr/local
+g_work_dir=${g_prefix}/golang
+g_base_version_dir=${g_prefix}/golang/versions
+g_base_url='https://storage.googleapis.com/golang'
+env_file=
+active_version=
+download_versions=
 
 usage(){
     cat <<-EOF
-
     Usage: g [options] [COMMAND] [args]
 
     Commands:
@@ -27,20 +22,19 @@ usage(){
       g                   Output help information
       g ls                Output all Golang versions
       g use               Use specific version
-      g dl                Download Golang package
       g rm                Remove the given version
-      g build             Build binary using specific version
+      g info              Display installed golang package information
 
     Options:
 
-      -h, --help           Display help information
+      -h, --help          Display help information
 EOF
 }
 
 display_remote_versions(){
-    versions=$(curl -L -# $BASE_URL \
+    versions=$(curl -L -# ${g_base_url} \
       |egrep -o 'go[1-9]\.[1-9](\.[1-9])?' \
-      |sort -u)
+      |sort -u -r)
     echo
     for v in $versions; do
       printf "  $v\n"
@@ -58,15 +52,15 @@ mkdir_not_exist_dir(){
 # Download specific golang version
 #
 download_specific_version(){
-    mkdir_not_exist_dir $BASE_VERSION_DIR
-    go_dir=$BASE_VERSION_DIR/$1
+    mkdir_not_exist_dir ${g_base_version_dir}
+    go_dir=${g_base_version_dir}/$1
     if test -d $go_dir;then
       echo "$1 have been downloaded!"
       exit
     fi
-    sudo mkdir -p $go_dir
+    mkdir_not_exist_dir $go_dir
     go_tar=$1.linux-amd64.tar.gz
-    dl_url=$BASE_URL/$go_tar
+    dl_url=${g_base_url}/$go_tar
     sudo curl -L -# $dl_url | sudo tar -zxf - -C $go_dir
 }
 
@@ -74,9 +68,9 @@ download_specific_version(){
 # Use version
 #
 use(){
-    versions=$(curl -L -# $BASE_URL \
+    versions=$(curl -L -# ${g_base_url} \
       |egrep -o 'go[1-9]\.[1-9](\.[1-9])?' \
-      |sort -u)
+      |sort -u -r)
     PS3="Please choose your golang version: "
     select opt in $versions; do
         activate $opt;break
@@ -88,50 +82,100 @@ use(){
 # input: go version:1.5 or 1.5.3
 #
 activate(){
-    set -x
     need_active_version=$1
-    download_versions=$(find $BASE_VERSION_DIR -maxdepth 1 -mindepth 1 -type d|egrep -o "go[1-9]\.[1-9](\.[1-9])?"|sort -u)
+    get_download_versions
     if ! echo "${download_versions[@]}"|grep -w "^$need_active_version$" &>/dev/null;then
       download_specific_version $need_active_version
     fi
-    current_version=$(find $BASE_ACTIVE_DIR -maxdepth 1 -mindepth 1 -type d|egrep -o "go[1-9]\.[1-9](\.[1-9])?"|sort -u)
-    if [ -z $current_version ];then
-      sudo cp -fR $BASE_VERSION_DIR/$need_active_version $BASE_ACTIVE_DIR
-      activate_goroot $BASE_ACTIVE_DIR/$need_active_version/go
-    else
-      if test $current_version -eq $need_avtive_version;then
-        echo "activate $need_active_version successfully!"
-      else
-        sudo rm -rf $BASE_ACTIVE_DIR/$current_version
-        sudo cp -fR $BASE_VERSION_DIR/$need_active_version $BASE_ACTIVE_DIR
-        activate_goroot $BASE_ACTIVE_DIR/$need_active_version/go
-      fi
-    fi
+    need_activate_dir=${g_base_version_dir}/${need_active_version}/go
+    activate_goroot ${need_activate_dir}
 }
 
 #
-# activate GOROOT
+# ativate GOROOT
 # input: GOROOT
 #
 activate_goroot(){
     goroot=$1
-    if [ ! -f $ENV_FILE ];then
-      touch $ENV_FILE
+    # identify which shell
+    get_env_file
+    if [ ! -f ~/${env_file} ];then
+      touch ~/${env_file}
     fi
-    is_path=$(grep "^export GOROOT" $ENV_FILE)
-    if [ -z $is_path ];then
-      sed '$aexport GOROOT=$goroot' -i $ENV_FILE
+    env_goroot=$(grep "^export GOROOT" ~/${env_file})
+    if [ -z "${env_goroot}" ];then
+      echo export GOROOT=$goroot >> ~/${env_file}
+      sed -i '$ a\export PATH=$GOROOT/bin:$PATH' ~/${env_file}
     else
-      sed "s@$is_path@export GOROOT=$goroot@" -i $ENV_FILE
+      sed "s@$env_goroot@export GOROOT=$goroot@" -i ~/${env_file}
+      env_path=$(cat ~/${env_file} | grep PATH | grep "\$GOROOT/bin")
+      if [ -z "${env_path}" ];then
+        sed -i '/^export GOROOT=/ a export PATH=$GOROOT/bin:$PATH' ~/${env_file}
+      fi
     fi
-    source $ENV_FILE
+    source ~/${env_file}
+}
+
+get_env_file(){
+    env_file=`echo $SHELL | sed 's@/usr/bin/@@' | sed -e 's/^/./' -e 's/$/rc/'`
+}
+
+get_active_version(){
+    get_env_file
+    active_version=`cat ~/${env_file} | egrep -o 'go[1-9]\.[1-9](\.[1-9])?'` # e.g. go1.6.1
+}
+
+get_download_versions(){
+    download_versions=`find ${g_base_version_dir} -maxdepth 1 -mindepth 1 -type d \
+             | egrep -o 'go[1-9]\.[1-9](\.[1-9])?'\
+             | sort -u -r`
 }
 
 #
-# remove version
+# remove download versions except which is in use
 #
 remove_version(){
-    echo "hello"
+    get_active_version
+    get_download_versions
+    echo ${active_version}
+    download_versions_without_in_use=`find ${g_base_version_dir} -maxdepth 1 -mindepth 1 -type d \
+        | egrep -o 'go[1-9]\.[1-9](\.[1-9])?' \
+        | grep -v "^${download_versions_without_in_use}$"`
+    echo
+    PS3="Please choose your golang version to remove: "
+    select opt in ${download_versions_without_in_use};do
+        do_remove $opt;break
+    done
+}
+
+do_remove(){
+    sudo rm -rf ${g_base_version_dir}/$1
+    echo remove $1 successfully.
+}
+
+#
+# state golang versions information
+#
+state_golang_info(){
+    get_active_version
+    get_download_versions
+    #format_download_versions=`echo ${download_versions} \
+    #                          |sed 's@^@  @g'`
+    cat <<-EOF
+qGo version:
+  ${g_version}
+Golang version in used:
+  ${active_version}
+Base directory:
+  ${g_work_dir}
+Download direstory:
+  ${g_base_version_dir}
+Downloaded packages:
+`for dl in ${download_versions}
+  do
+    echo "  -$dl"
+  done`
+EOF
 }
 
 #
@@ -144,10 +188,9 @@ else
     case $1 in
       ls) display_remote_versions;;
       -h|--help) usage;;
-      dl) download_specific_version $2; exit;;
       use) use; exit;;
-      rm) echo 'not impleted'; exit;;
-      build) echo 'not impleted'; exit;;
+      rm) remove_version; exit;;
+      info) state_golang_info; exit;;
       *) usage; exit;;
      esac
      shift
