@@ -113,11 +113,13 @@ activate_goroot(){
         sed -i '/^export GOROOT=/ a export PATH=$GOROOT/bin:$PATH' ~/${env_file}
       fi
     fi
-    source ~/${env_file}
+    . ~/${env_file}
 }
 
 get_env_file(){
-    env_file=`echo $SHELL | sed 's@/usr/bin/@@' | sed -e 's/^/./' -e 's/$/rc/'`
+    shell_=${SHELL##*/}
+    env_file=`echo $shell_ | sed -e 's/^/./' -e 's/$/rc/'`
+    #env_file=`echo $SHELL | sed 's@/usr/bin/@@' | sed -e 's/^/./' -e 's/$/rc/'`
 }
 
 get_active_version(){
