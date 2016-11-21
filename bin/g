@@ -159,6 +159,8 @@ do_remove(){
 # state golang versions information
 #
 state_golang_info(){
+    mkdir_not_exist_dir ${g_base_version_dir}
+    mkdir_not_exist_dir ${g_work_dir}
     get_active_version
     get_download_versions
     #format_download_versions=`echo ${download_versions} \
