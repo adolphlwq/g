@@ -114,12 +114,12 @@ activate_goroot(){
       fi
     fi
     . ~/${env_file}
+    sudo chmod 755 -R ${g_base_version_dir}
 }
 
 get_env_file(){
     shell_=${SHELL##*/}
     env_file=`echo $shell_ | sed -e 's/^/./' -e 's/$/rc/'`
-    #env_file=`echo $SHELL | sed 's@/usr/bin/@@' | sed -e 's/^/./' -e 's/$/rc/'`
 }
 
 get_active_version(){
