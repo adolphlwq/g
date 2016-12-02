@@ -1,4 +1,4 @@
-# qGo
+# g
 `g`: Interactively Manage Your Golang Versions. Inspired by [GitHub-tj/n](https://github.com/tj/n)
 
 ## Demo
@@ -7,12 +7,12 @@
 ## Usage
 - clone repo
 ```
-git clone https://github.com/adolphlwq/qGo.git
+git clone https://github.com/adolphlwq/g.git
 ```
 - help info
 ```
-cd qGo
-geek@localhost:qGo$ bin/g -h
+cd g
+geek@localhost:$ bin/g -h
     Usage: g [options] [COMMAND] [args]
 
     Commands:
@@ -33,7 +33,7 @@ bin/g use
 ```
 - see current state
 ```
-geek@localhost:qGo$ bin/g info
+geek@localhost:$ bin/g info
 qGo version:
   0.0.1
 Golang version in used:
