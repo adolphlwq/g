@@ -33,7 +33,7 @@ EOF
 
 display_remote_versions(){
     versions=$(curl -L -# ${g_base_url} \
-      |egrep -o 'go[1-9]\.[1-9](\.[1-9])?' \
+      |egrep -o 'go[1-9]\.[1-9]{2}\.[1-9]' \
       |sort -u -r)
     echo
     for v in $versions; do
@@ -69,7 +69,7 @@ download_specific_version(){
 #
 use(){
     versions=$(curl -L -# ${g_base_url} \
-      |egrep -o 'go[1-9]\.[1-9](\.[1-9])?' \
+      |egrep -o 'go[1-9]\.[1-9]{2}\.[1-9]' \
       |sort -u -r)
     PS3="Please choose your golang version: "
     select opt in $versions; do
